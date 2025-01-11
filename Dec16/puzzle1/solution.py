@@ -1,5 +1,6 @@
 import heapq
 from collections import defaultdict
+from collections import deque
 
 INF = float("inf")
 def read_data(filename):
@@ -51,6 +52,8 @@ class State:
             return (self.pos, self.direction) >= (other.pos, other.direction)
         return NotImplemented
 
+    #def __repr__(self):
+    #    return f"State({self.pos}, {self.direction})"
 
 
 def solution(data):
@@ -74,7 +77,7 @@ def solution(data):
     min_cost = float("inf")
     # track the lowest cost to get to each state
     min_cost_for_state = {initial_state: 0}
-
+    end_states = set()
     backtrack = defaultdict(set)
 
     while pq:
@@ -88,12 +91,12 @@ def solution(data):
             continue
         min_cost_for_state[state] = cost
         if (r, c) == end:
-            # iterate until the costs gets greater than the best one
             if cost > min_cost:
                 break
             min_cost = cost
+            end_states.add(state)
 
-        backtrack[state] = state.previous_state
+        backtrack[state].add(state.previous_state)
 
         possible_moves = [
             (cost + 1, r + dr, c + dc, dr, dc),
@@ -107,7 +110,28 @@ def solution(data):
             new_state = State(pos=(nr, nc), direction=(dr, dc))
             new_state.previous_state = state
             heapq.heappush(pq, (ncost, new_state))
-    print(backtrack)
+
+    # bff
+    final_positions = set(s.pos for s in end_states)
+    visited = set(s for s in end_states)
+    states = deque(end_states)
+    while states:
+        s = states.pop()
+        for previous in backtrack[s]:
+            if previous in visited or previous is None:
+                continue
+            visited.add(previous)
+            states.append(previous)
+            final_positions.add(previous.pos)
+
+    for x, y in final_positions:
+        data[x][y] = '0'
+    for row in data:
+        print(''.join(row))
+
+    return len(final_positions)
+
+
 
 
 if __name__ == '__main__':
